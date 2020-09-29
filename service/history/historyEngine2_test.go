@@ -231,7 +231,7 @@ func (s *engine2Suite) TestRecordWorkflowTaskStartedSuccessStickyExpired() {
 	response, err := s.historyEngine.RecordWorkflowTaskStarted(context.Background(), &request)
 	s.Nil(err)
 	s.NotNil(response)
-	s.True(response.StartedTime.After(*expectedResponse.ScheduledTime))
+	s.True(!response.StartedTime.Before(*expectedResponse.ScheduledTime))
 	expectedResponse.StartedTime = response.StartedTime
 	expectedResponse.Queries = make(map[string]*querypb.WorkflowQuery)
 	s.Equal(&expectedResponse, response)
@@ -303,7 +303,7 @@ func (s *engine2Suite) TestRecordWorkflowTaskStartedSuccessStickyEnabled() {
 	response, err := s.historyEngine.RecordWorkflowTaskStarted(context.Background(), &request)
 	s.Nil(err)
 	s.NotNil(response)
-	s.True(response.StartedTime.After(*expectedResponse.ScheduledTime))
+	s.True(!response.StartedTime.Before(*expectedResponse.ScheduledTime))
 	expectedResponse.StartedTime = response.StartedTime
 	expectedResponse.Queries = make(map[string]*querypb.WorkflowQuery)
 	s.Equal(&expectedResponse, response)

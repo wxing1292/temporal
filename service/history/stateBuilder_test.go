@@ -28,6 +28,8 @@ import (
 	"testing"
 	"time"
 
+	"go.temporal.io/server/common/clock"
+
 	"github.com/golang/mock/gomock"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/require"
@@ -165,7 +167,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionStarted_No
 		CronSchedule:       cronSchedule,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_STARTED
 	startWorkflowAttribute := &historypb.WorkflowExecutionStartedEventAttributes{
 		ParentWorkflowNamespace: testParentNamespace,
@@ -212,7 +214,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionStarted_Wi
 		CronSchedule:       cronSchedule,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	eventType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_STARTED
 	startWorkflowAttribute := &historypb.WorkflowExecutionStartedEventAttributes{
 		ParentWorkflowNamespace:  testParentNamespace,
@@ -259,7 +261,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionTimedOut()
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_TIMED_OUT
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -289,7 +291,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionTerminated
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_TERMINATED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -318,7 +320,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionFailed() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_FAILED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -348,7 +350,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionCompleted(
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_COMPLETED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -378,7 +380,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionCanceled()
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_CANCELED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -411,7 +413,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionContinuedA
 	parentRunID := uuid.New()
 	parentInitiatedEventID := int64(144)
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	taskqueue := "some random taskqueue"
 	workflowType := "some random workflow type"
 	workflowTimeoutSecond := time.Duration(110) * time.Second
@@ -526,7 +528,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionContinuedA
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	newRunID := uuid.New()
 
 	continueAsNewEvent := &historypb.HistoryEvent{
@@ -570,7 +572,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionSignaled()
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_SIGNALED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -596,7 +598,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowExecutionCancelRequ
 		WorkflowId: "some random workflow ID",
 		RunId:      testRunID,
 	}
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_EXECUTION_CANCEL_REQUESTED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -624,7 +626,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeUpsertWorkflowSearchAttribu
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_UPSERT_WORKFLOW_SEARCH_ATTRIBUTES
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -654,7 +656,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeMarkerRecorded() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_MARKER_RECORDED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -681,7 +683,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowTaskScheduled() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	taskqueue := &taskqueuepb.TaskQueue{Kind: enumspb.TASK_QUEUE_KIND_NORMAL, Name: "some random taskqueue"}
 	timeout := time.Duration(11) * time.Second
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_TASK_SCHEDULED
@@ -732,7 +734,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowTaskStarted() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	taskqueue := &taskqueuepb.TaskQueue{Kind: enumspb.TASK_QUEUE_KIND_NORMAL, Name: "some random taskqueue"}
 	timeout := time.Second * 11
 	scheduleID := int64(111)
@@ -781,7 +783,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowTaskTimedOut() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	scheduleID := int64(12)
 	startedID := int64(28)
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_TASK_TIMED_OUT
@@ -828,7 +830,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowTaskFailed() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	scheduleID := int64(12)
 	startedID := int64(28)
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_TASK_FAILED
@@ -874,7 +876,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeWorkflowTaskCompleted() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	scheduleID := int64(12)
 	startedID := int64(28)
 	evenType := enumspb.EVENT_TYPE_WORKFLOW_TASK_COMPLETED
@@ -908,7 +910,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeTimerStarted() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	timerID := "timer ID"
 	timeoutSecond := time.Duration(10) * time.Second
 	evenType := enumspb.EVENT_TYPE_TIMER_STARTED
@@ -950,7 +952,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeTimerFired() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_TIMER_FIRED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -980,7 +982,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeTimerCanceled() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	evenType := enumspb.EVENT_TYPE_TIMER_CANCELED
 	event := &historypb.HistoryEvent{
@@ -1012,7 +1014,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeActivityTaskScheduled() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	activityID := "activity ID"
 	taskqueue := "some random taskqueue"
 	timeoutSecond := 10 * time.Second
@@ -1071,7 +1073,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeActivityTaskStarted() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	taskqueue := "some random taskqueue"
 	evenType := enumspb.EVENT_TYPE_ACTIVITY_TASK_SCHEDULED
 	scheduledEvent := &historypb.HistoryEvent{
@@ -1114,7 +1116,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeActivityTaskTimedOut() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_ACTIVITY_TASK_TIMED_OUT
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1145,7 +1147,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeActivityTaskFailed() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_ACTIVITY_TASK_FAILED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1175,7 +1177,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeActivityTaskCompleted() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_ACTIVITY_TASK_COMPLETED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1205,7 +1207,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeActivityTaskCancelRequested
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_ACTIVITY_TASK_CANCEL_REQUESTED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1232,7 +1234,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeActivityTaskCanceled() {
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_ACTIVITY_TASK_CANCELED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1265,7 +1267,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeStartChildWorkflowExecution
 	}
 	targetWorkflowID := "some random target workflow ID"
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	createRequestID := uuid.New()
 	evenType := enumspb.EVENT_TYPE_START_CHILD_WORKFLOW_EXECUTION_INITIATED
 	event := &historypb.HistoryEvent{
@@ -1313,7 +1315,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeStartChildWorkflowExecution
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_START_CHILD_WORKFLOW_EXECUTION_FAILED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1340,7 +1342,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeChildWorkflowExecutionStart
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_CHILD_WORKFLOW_EXECUTION_STARTED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1367,7 +1369,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeChildWorkflowExecutionTimed
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_CHILD_WORKFLOW_EXECUTION_TIMED_OUT
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1394,7 +1396,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeChildWorkflowExecutionTermi
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_CHILD_WORKFLOW_EXECUTION_TERMINATED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1421,7 +1423,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeChildWorkflowExecutionFaile
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_CHILD_WORKFLOW_EXECUTION_FAILED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1448,7 +1450,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeChildWorkflowExecutionCompl
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_CHILD_WORKFLOW_EXECUTION_COMPLETED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1481,7 +1483,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeRequestCancelExternalWorkfl
 	targetRunID := uuid.New()
 	childWorkflowOnly := true
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	cancellationRequestID := uuid.New()
 	control := "some random control"
 	evenType := enumspb.EVENT_TYPE_REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_INITIATED
@@ -1531,7 +1533,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeRequestCancelExternalWorkfl
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_REQUEST_CANCEL_EXTERNAL_WORKFLOW_EXECUTION_FAILED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1558,7 +1560,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeExternalWorkflowExecutionCa
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_EXTERNAL_WORKFLOW_EXECUTION_CANCEL_REQUESTED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1585,7 +1587,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeChildWorkflowExecutionCance
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_CHILD_WORKFLOW_EXECUTION_CANCELED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1616,7 +1618,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeSignalExternalWorkflowExecu
 	targetRunID := uuid.New()
 	childWorkflowOnly := true
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	signalRequestID := uuid.New()
 	signalName := "some random signal name"
 	signalInput := payloads.EncodeString("some random signal input")
@@ -1672,7 +1674,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeSignalExternalWorkflowExecu
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_SIGNAL_EXTERNAL_WORKFLOW_EXECUTION_FAILED
 	event := &historypb.HistoryEvent{
 		Version:    version,
@@ -1699,7 +1701,7 @@ func (s *stateBuilderSuite) TestApplyEvents_EventTypeExternalWorkflowExecutionSi
 		RunId:      testRunID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	evenType := enumspb.EVENT_TYPE_EXTERNAL_WORKFLOW_EXECUTION_SIGNALED
 	event := &historypb.HistoryEvent{
 		Version:    version,

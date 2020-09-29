@@ -34,8 +34,9 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	workflowservice "go.temporal.io/api/workflowservice/v1"
-	resource "go.temporal.io/server/common/resource"
 	grpc_health_v1 "google.golang.org/grpc/health/grpc_health_v1"
+
+	resource "go.temporal.io/server/common/resource"
 )
 
 // MockHandler is a mock of Handler interface.

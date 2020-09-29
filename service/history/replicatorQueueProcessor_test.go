@@ -28,6 +28,8 @@ import (
 	"testing"
 	"time"
 
+	"go.temporal.io/server/common/clock"
+
 	"github.com/golang/mock/gomock"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/require"
@@ -294,7 +296,7 @@ func (s *replicatorQueueProcessorSuite) TestSyncActivity_ActivityRetry() {
 
 	activityVersion := int64(333)
 	activityScheduleID := scheduleID
-	activityScheduledTime := time.Now().UTC()
+	activityScheduledTime := clock.Now()
 	activityStartedID := common.EmptyEventID
 	activityAttempt := int32(16384)
 	activityDetails := payloads.EncodeString("some random activity progress")

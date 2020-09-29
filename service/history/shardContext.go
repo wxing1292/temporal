@@ -1143,7 +1143,7 @@ func (s *shardContextImpl) GetCurrentTime(cluster string) time.Time {
 	if cluster != s.GetClusterMetadata().GetCurrentClusterName() {
 		return s.remoteClusterCurrentTime[cluster]
 	}
-	return s.GetTimeSource().Now().UTC()
+	return s.GetTimeSource().Now()
 }
 
 func (s *shardContextImpl) GetLastUpdatedTime() time.Time {

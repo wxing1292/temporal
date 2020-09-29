@@ -32,6 +32,10 @@ import (
 	_ "github.com/jonboulle/clockwork"
 )
 
+const (
+	precision = time.Millisecond
+)
+
 type (
 	// TimeSource is an interface for any
 	// entity that provides the current
@@ -49,6 +53,12 @@ type (
 	}
 )
 
+var Clock = NewRealTimeSource()
+
+func Now() time.Time {
+	return Clock.Now()
+}
+
 // NewRealTimeSource returns a time source that servers
 // real wall clock time
 func NewRealTimeSource() *RealTimeSource {
@@ -57,7 +67,7 @@ func NewRealTimeSource() *RealTimeSource {
 
 // Now return the real current time
 func (ts *RealTimeSource) Now() time.Time {
-	return time.Now().UTC()
+	return time.Now().UTC().Truncate(precision)
 }
 
 // NewEventTimeSource returns a time source that servers
@@ -73,6 +83,6 @@ func (ts *EventTimeSource) Now() time.Time {
 
 // Update update the fake current time
 func (ts *EventTimeSource) Update(now time.Time) *EventTimeSource {
-	ts.now = now
+	ts.now = now.Truncate(precision)
 	return ts
 }

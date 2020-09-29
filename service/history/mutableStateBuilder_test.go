@@ -28,6 +28,8 @@ import (
 	"testing"
 	"time"
 
+	"go.temporal.io/server/common/clock"
+
 	"github.com/golang/mock/gomock"
 	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/require"
@@ -129,7 +131,7 @@ func (s *mutableStateSuite) TestTransientWorkflowTaskCompletionFirstBatchReplica
 	newWorkflowTaskCompletedEvent := &historypb.HistoryEvent{
 		Version:   version,
 		EventId:   newWorkflowTaskStartedEvent.GetEventId() + 1,
-		EventTime: timestamp.TimePtr(time.Now().UTC()),
+		EventTime: timestamp.TimePtr(clock.Now()),
 		EventType: enumspb.EVENT_TYPE_WORKFLOW_TASK_COMPLETED,
 		Attributes: &historypb.HistoryEvent_WorkflowTaskCompletedEventAttributes{WorkflowTaskCompletedEventAttributes: &historypb.WorkflowTaskCompletedEventAttributes{
 			ScheduledEventId: newWorkflowTaskScheduleEvent.GetEventId(),
@@ -279,7 +281,7 @@ func (s *mutableStateSuite) TestReorderEvents() {
 		WorkflowRunTimeout:         timestamp.DurationFromSeconds(200),
 		DefaultWorkflowTaskTimeout: timestamp.DurationFromSeconds(100),
 		ExecutionState: &persistenceblobs.WorkflowExecutionState{
-			RunId:                      we.GetRunId(),
+			RunId:  we.GetRunId(),
 			State:  enumsspb.WORKFLOW_EXECUTION_STATE_RUNNING,
 			Status: enumspb.WORKFLOW_EXECUTION_STATUS_RUNNING,
 		},
@@ -297,9 +299,9 @@ func (s *mutableStateSuite) TestReorderEvents() {
 		5: {
 			Version:                int64(1),
 			ScheduleId:             int64(5),
-			ScheduledTime:          timestamp.TimePtr(time.Now().UTC()),
+			ScheduledTime:          timestamp.TimePtr(clock.Now()),
 			StartedId:              common.EmptyEventID,
-			StartedTime:            timestamp.TimePtr(time.Now().UTC()),
+			StartedTime:            timestamp.TimePtr(clock.Now()),
 			ActivityId:             activityID,
 			ScheduleToStartTimeout: timestamp.DurationFromSeconds(100),
 			ScheduleToCloseTimeout: timestamp.DurationFromSeconds(200),
@@ -360,7 +362,7 @@ func (s *mutableStateSuite) TestChecksum() {
 		{
 			name: "closeTransactionAsSnapshot",
 			closeTxFunc: func(ms *mutableStateBuilder) (checksum.Checksum, error) {
-				snapshot, _, err := ms.CloseTransactionAsSnapshot(time.Now().UTC(), transactionPolicyPassive)
+				snapshot, _, err := ms.CloseTransactionAsSnapshot(clock.Now(), transactionPolicyPassive)
 				if err != nil {
 					return checksum.Checksum{}, err
 				}
@@ -371,7 +373,7 @@ func (s *mutableStateSuite) TestChecksum() {
 			name:                 "closeTransactionAsMutation",
 			enableBufferedEvents: true,
 			closeTxFunc: func(ms *mutableStateBuilder) (checksum.Checksum, error) {
-				mutation, _, err := ms.CloseTransactionAsMutation(time.Now().UTC(), transactionPolicyPassive)
+				mutation, _, err := ms.CloseTransactionAsMutation(clock.Now(), transactionPolicyPassive)
 				if err != nil {
 					return checksum.Checksum{}, err
 				}
@@ -552,7 +554,7 @@ func (s *mutableStateSuite) prepareTransientWorkflowTaskCompletionFirstBatchRepl
 		RunId:      runID,
 	}
 
-	now := time.Now().UTC()
+	now := clock.Now()
 	workflowType := "some random workflow type"
 	taskqueue := "some random taskqueue"
 	workflowTimeout := 222 * time.Second
@@ -731,7 +733,7 @@ func (s *mutableStateSuite) buildWorkflowMutableState() *persistence.WorkflowMut
 		WorkflowRunTimeout:         timestamp.DurationFromSeconds(200),
 		DefaultWorkflowTaskTimeout: timestamp.DurationFromSeconds(100),
 		ExecutionState: &persistenceblobs.WorkflowExecutionState{
-			RunId:                      we.GetRunId(),
+			RunId:  we.GetRunId(),
 			State:  enumsspb.WORKFLOW_EXECUTION_STATE_RUNNING,
 			Status: enumspb.WORKFLOW_EXECUTION_STATUS_RUNNING,
 		},
@@ -749,9 +751,9 @@ func (s *mutableStateSuite) buildWorkflowMutableState() *persistence.WorkflowMut
 		5: {
 			Version:                failoverVersion,
 			ScheduleId:             int64(90),
-			ScheduledTime:          timestamp.TimePtr(time.Now().UTC()),
+			ScheduledTime:          timestamp.TimePtr(clock.Now()),
 			StartedId:              common.EmptyEventID,
-			StartedTime:            timestamp.TimePtr(time.Now().UTC()),
+			StartedTime:            timestamp.TimePtr(clock.Now()),
 			ActivityId:             "activityID_5",
 			ScheduleToStartTimeout: timestamp.DurationFromSeconds(100),
 			ScheduleToCloseTimeout: timestamp.DurationFromSeconds(200),

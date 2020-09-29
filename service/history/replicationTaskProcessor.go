@@ -34,6 +34,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"go.temporal.io/server/common/clock"
+
 	"go.temporal.io/api/serviceerror"
 
 	enumsspb "go.temporal.io/server/api/enums/v1"
@@ -282,7 +284,7 @@ func (p *ReplicationTaskProcessorImpl) processResponse(response *replicationspb.
 
 	p.syncShardChan <- response.GetSyncShardStatus()
 	scope := p.metricsClient.Scope(metrics.ReplicationTaskFetcherScope, metrics.TargetClusterTag(p.sourceCluster))
-	batchRequestStartTime := time.Now()
+	batchRequestStartTime := clock.Now()
 
 	for _, replicationTask := range response.ReplicationTasks {
 		err := p.processSingleTask(replicationTask)
@@ -299,7 +301,7 @@ func (p *ReplicationTaskProcessorImpl) processResponse(response *replicationspb.
 		backoffDuration := p.noTaskRetrier.NextBackOff()
 		time.Sleep(backoffDuration)
 	} else {
-		scope.RecordTimer(metrics.ReplicationTasksAppliedLatency, time.Now().Sub(batchRequestStartTime))
+		scope.RecordTimer(metrics.ReplicationTasksAppliedLatency, clock.Now().Sub(batchRequestStartTime))
 	}
 
 	p.lastProcessedMessageID = response.GetLastRetrievedMessageId()

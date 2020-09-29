@@ -27,7 +27,8 @@ package history
 import (
 	"context"
 	"testing"
-	"time"
+
+	"go.temporal.io/server/common/clock"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -69,7 +70,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TearDownTest() {
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_NoRebuild_CurrentWorkflowGuaranteed() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	isWorkflowRebuilt := false
 
@@ -108,7 +109,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_NoRebuild_CurrentWorkflowNotGuaranteed_IsCurrent() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"
@@ -136,7 +137,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_NoRebuild_CurrentWorkflowNotGuaranteed_NotCurrent_CurrentRunning_UpdateAsCurrent() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"
@@ -209,7 +210,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_NoRebuild_CurrentWorkflowNotGuaranteed_NotCurrent_CurrentComplete_UpdateAsCurrent() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"
@@ -282,7 +283,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_NoRebuild_CurrentWorkflowNotGuaranteed_NotCurrent_UpdateAsZombie_NewRunDoesNotExists() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"
@@ -353,7 +354,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_NoRebuild_CurrentWorkflowNotGuaranteed_NotCurrent_UpdateAsZombie_NewRunDoesExists() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"
@@ -424,7 +425,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_Rebuild_IsCurrent() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"
@@ -477,7 +478,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_Rebuild_NotCurrent_UpdateAsCurrent() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"
@@ -549,7 +550,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_Rebuild_NotCurrent_UpdateAsZombie_NewRunDoesNotExists() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"
@@ -621,7 +622,7 @@ func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkf
 
 func (s *nDCTransactionMgrForExistingWorkflowSuite) TestDispatchForExistingWorkflow_Rebuild_NotCurrent_UpdateAsZombie_NewRunDoesExists() {
 	ctx := context.Background()
-	now := time.Now().UTC()
+	now := clock.Now()
 
 	namespaceID := "some random namespace ID"
 	workflowID := "some random workflow ID"

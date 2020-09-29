@@ -29,6 +29,8 @@ import (
 	"testing"
 	"time"
 
+	"go.temporal.io/server/common/clock"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -233,10 +235,10 @@ func (s *taskProcessorSuite) TestHandleTaskError_NamespaceNotActiveError() {
 	err := serviceerror.NewNamespaceNotActive("", "", "")
 
 	taskInfo := newTaskInfo(s.mockProcessor, nil, s.logger)
-	taskInfo.startTime = time.Now().UTC().Add(-cache.NamespaceCacheRefreshInterval * time.Duration(2))
+	taskInfo.startTime = clock.Now().Add(-cache.NamespaceCacheRefreshInterval * time.Duration(2))
 	s.Nil(s.taskProcessor.handleTaskError(s.scope, taskInfo, s.notificationChan, err))
 
-	taskInfo.startTime = time.Now().UTC()
+	taskInfo.startTime = clock.Now()
 	s.Equal(err, s.taskProcessor.handleTaskError(s.scope, taskInfo, s.notificationChan, err))
 }
 

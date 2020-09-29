@@ -28,6 +28,8 @@ import (
 	"context"
 	"time"
 
+	"go.temporal.io/server/common/clock"
+
 	"github.com/pborman/uuid"
 	commonpb "go.temporal.io/api/common/v1"
 	enumspb "go.temporal.io/api/enums/v1"
@@ -194,7 +196,7 @@ func (r *nDCHistoryReplicatorImpl) ApplyEvents(
 	request *historyservice.ReplicateEventsV2Request,
 ) (retError error) {
 
-	startTime := time.Now().UTC()
+	startTime := clock.Now()
 	task, err := newNDCReplicationTask(
 		r.clusterMetadata,
 		r.historySerializer,
@@ -580,7 +582,7 @@ func (r *nDCHistoryReplicatorImpl) applyNonStartEventsToNoneCurrentBranchWithCon
 	releaseFn(nil)
 
 	// step 2
-	startTime := time.Now().UTC()
+	startTime := clock.Now()
 	task, newTask, err := task.splitTask(startTime)
 	if err != nil {
 		return err

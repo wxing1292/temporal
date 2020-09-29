@@ -37,6 +37,7 @@ import (
 
 	proto "github.com/gogo/protobuf/proto"
 	v11 "go.temporal.io/api/enums/v1"
+
 	v1 "go.temporal.io/server/api/enums/v1"
 	v12 "go.temporal.io/server/api/history/v1"
 )

@@ -29,6 +29,8 @@ import (
 	"strings"
 	"time"
 
+	"go.temporal.io/server/common/clock"
+
 	"github.com/pborman/uuid"
 	commandpb "go.temporal.io/api/command/v1"
 	commonpb "go.temporal.io/api/common/v1"
@@ -489,7 +491,7 @@ func (v *commandAttrValidator) validateContinueAsNewWorkflowExecutionAttributes(
 	// handleCommandContinueAsNewWorkflow must handle negative runTimeout value
 	timeoutTime := timestamp.TimeValue(executionInfo.WorkflowExpirationTime)
 	if !timeoutTime.IsZero() {
-		runTimeout := timestamp.RoundUp(timeoutTime.Sub(time.Now().UTC()))
+		runTimeout := timestamp.RoundUp(timeoutTime.Sub(clock.Now()))
 		if timestamp.DurationValue(attributes.GetWorkflowRunTimeout()) > 0 {
 			runTimeout = timestamp.MinDuration(runTimeout, timestamp.DurationValue(attributes.GetWorkflowRunTimeout()))
 		} else {

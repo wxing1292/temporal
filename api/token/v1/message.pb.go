@@ -37,6 +37,7 @@ import (
 	strings "strings"
 
 	proto "github.com/gogo/protobuf/proto"
+
 	v1 "go.temporal.io/server/api/history/v1"
 )
 

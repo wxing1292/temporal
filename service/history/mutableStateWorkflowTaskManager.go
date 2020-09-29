@@ -316,7 +316,7 @@ func (m *mutableStateWorkflowTaskManagerImpl) AddWorkflowTaskScheduledEventAsHea
 	var newWorkflowTaskEvent *historypb.HistoryEvent
 	scheduleID := m.msb.GetNextEventID() // we will generate the schedule event later for repeatedly failing workflow tasks
 	// Avoid creating new history events when workflow tasks are continuously failing
-	scheduleTime := m.msb.timeSource.Now().UTC()
+	scheduleTime := m.msb.timeSource.Now()
 	if m.msb.executionInfo.WorkflowTaskAttempt == 1 {
 		newWorkflowTaskEvent = m.msb.hBuilder.AddWorkflowTaskScheduledEvent(taskQueue, int32(taskTimeout.Seconds()),
 			m.msb.executionInfo.WorkflowTaskAttempt)
@@ -579,7 +579,7 @@ func (m *mutableStateWorkflowTaskManagerImpl) FailWorkflowTask(
 	}
 	if incrementAttempt {
 		failWorkflowTaskInfo.Attempt = m.msb.executionInfo.WorkflowTaskAttempt + 1
-		failWorkflowTaskInfo.ScheduledTimestamp = timestamp.TimePtr(m.msb.timeSource.Now().UTC())
+		failWorkflowTaskInfo.ScheduledTimestamp = timestamp.TimePtr(m.msb.timeSource.Now())
 	}
 	m.UpdateWorkflowTask(failWorkflowTaskInfo)
 }

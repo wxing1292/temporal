@@ -38,6 +38,7 @@ import (
 
 	proto "github.com/gogo/protobuf/proto"
 	github_com_gogo_protobuf_sortkeys "github.com/gogo/protobuf/sortkeys"
+
 	v1 "go.temporal.io/server/api/enums/v1"
 )
 

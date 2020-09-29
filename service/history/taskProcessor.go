@@ -91,7 +91,7 @@ func newTaskInfo(
 		processor:         processor,
 		task:              task,
 		attempt:           1,
-		startTime:         time.Now().UTC(), // used for metrics
+		startTime:         clock.Now(), // used for metrics
 		logger:            logger,
 		shouldProcessTask: true,
 	}
@@ -306,7 +306,7 @@ func (t *taskProcessor) handleTaskError(
 	// TODO remove this error check special case
 	//  since the new task life cycle will not give up until task processed / verified
 	if _, ok := err.(*serviceerror.NamespaceNotActive); ok {
-		if t.timeSource.Now().Sub(task.startTime) > 2*cache.NamespaceCacheRefreshInterval {
+		if t.timeSource.Now().Sub(task.startTime) >= 2*cache.NamespaceCacheRefreshInterval {
 			scope.IncCounter(metrics.TaskNotActiveCounter)
 			return nil
 		}
