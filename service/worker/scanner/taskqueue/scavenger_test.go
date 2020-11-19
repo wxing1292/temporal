@@ -200,7 +200,7 @@ func (s *ScavengerTestSuite) setupTaskMgrMocks() {
 		}, nil)
 	s.taskMgr.On("CompleteTasksLessThan", mock.Anything).Return(
 		func(req *p.CompleteTasksLessThanRequest) int {
-			return s.taskTables[req.TaskQueueName].deleteLessThan(req.TaskID, req.Limit)
+			return s.taskTables[req.TaskQueueName].deleteLessThan(req.TaskID)
 		}, nil)
 }
 

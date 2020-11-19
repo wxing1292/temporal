@@ -145,12 +145,12 @@ func (db *taskQueueDB) CreateTasks(tasks []*persistencespb.AllocatedTaskInfo) (*
 // GetTasks returns a batch of tasks between the given range
 func (db *taskQueueDB) GetTasks(minTaskID int64, maxTaskID int64, batchSize int) (*persistence.GetTasksResponse, error) {
 	return db.store.GetTasks(&persistence.GetTasksRequest{
-		NamespaceID:  db.namespaceID,
-		TaskQueue:    db.taskQueueName,
-		TaskType:     db.taskType,
-		BatchSize:    batchSize,
-		ReadLevel:    minTaskID,  // exclusive
-		MaxReadLevel: &maxTaskID, // inclusive
+		NamespaceID:       db.namespaceID,
+		TaskQueue:         db.taskQueueName,
+		TaskType:          db.taskType,
+		BatchSize:         batchSize,
+		MinExclusiveLevel: minTaskID,
+		MaxInclusiveLevel: maxTaskID,
 	})
 }
 
@@ -178,13 +178,12 @@ func (db *taskQueueDB) CompleteTask(taskID int64) error {
 // CompleteTasksLessThan deletes of tasks less than the given taskID. Limit is
 // the upper bound of number of tasks that can be deleted by this method. It may
 // or may not be honored
-func (db *taskQueueDB) CompleteTasksLessThan(taskID int64, limit int) (int, error) {
+func (db *taskQueueDB) CompleteTasksLessThan(taskID int64) (int, error) {
 	n, err := db.store.CompleteTasksLessThan(&persistence.CompleteTasksLessThanRequest{
 		NamespaceID:   db.namespaceID,
 		TaskQueueName: db.taskQueueName,
 		TaskType:      db.taskType,
 		TaskID:        taskID,
-		Limit:         limit,
 	})
 	if err != nil {
 		db.logger.Error("Persistent store operation failure",

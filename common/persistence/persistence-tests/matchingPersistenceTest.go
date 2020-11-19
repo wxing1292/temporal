@@ -26,6 +26,7 @@ package persistencetests
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/pborman/uuid"
@@ -167,11 +168,12 @@ func (s *MatchingPersistenceSuite) TestGetTasksWithNoMaxReadLevel() {
 	for _, tc := range testCases {
 		s.Run(fmt.Sprintf("tc_%v_%v", tc.batchSz, tc.readLevel), func() {
 			response, err := s.TaskMgr.GetTasks(&p.GetTasksRequest{
-				NamespaceID: namespaceID,
-				TaskQueue:   taskQueue,
-				TaskType:    enumspb.TASK_QUEUE_TYPE_ACTIVITY,
-				BatchSize:   tc.batchSz,
-				ReadLevel:   tc.readLevel,
+				NamespaceID:       namespaceID,
+				TaskQueue:         taskQueue,
+				TaskType:          enumspb.TASK_QUEUE_TYPE_ACTIVITY,
+				BatchSize:         tc.batchSz,
+				MinExclusiveLevel: tc.readLevel,
+				MaxInclusiveLevel: math.MaxInt64,
 			})
 			s.NoError(err)
 			s.Equal(len(tc.taskIDs), len(response.Tasks), "wrong number of tasks")
@@ -247,41 +249,36 @@ func (s *MatchingPersistenceSuite) TestCompleteTasksLessThan() {
 
 	testCases := []struct {
 		taskID int64
-		limit  int
 		output []int64
 	}{
 		{
-			taskID: tasks[5].GetTaskId(),
-			limit:  1,
+			taskID: tasks[0].GetTaskId(),
 			output: []int64{tasks[1].GetTaskId(), tasks[2].GetTaskId(), tasks[3].GetTaskId(), tasks[4].GetTaskId(), tasks[5].GetTaskId()},
 		},
 		{
-			taskID: tasks[5].GetTaskId(),
-			limit:  2,
+			taskID: tasks[2].GetTaskId(),
 			output: []int64{tasks[3].GetTaskId(), tasks[4].GetTaskId(), tasks[5].GetTaskId()},
 		},
 		{
 			taskID: tasks[5].GetTaskId(),
-			limit:  10,
 			output: []int64{},
 		},
 	}
 
 	remaining := len(resp.Tasks)
-	req := &p.CompleteTasksLessThanRequest{NamespaceID: namespaceID, TaskQueueName: taskQueue, TaskType: enumspb.TASK_QUEUE_TYPE_ACTIVITY, Limit: 1}
+	req := &p.CompleteTasksLessThanRequest{NamespaceID: namespaceID, TaskQueueName: taskQueue, TaskType: enumspb.TASK_QUEUE_TYPE_ACTIVITY}
 
 	for _, tc := range testCases {
 		req.TaskID = tc.taskID
-		req.Limit = tc.limit
 		nRows, err := s.TaskMgr.CompleteTasksLessThan(req)
 		s.NoError(err)
 		resp, err := s.GetTasks(namespaceID, taskQueue, enumspb.TASK_QUEUE_TYPE_ACTIVITY, 10)
 		s.NoError(err)
 		if nRows == p.UnknownNumRowsAffected {
-			s.Equal(0, len(resp.Tasks), "expected all tasks to be deleted")
-			break
+			// noop
+		} else {
+			s.Equal(remaining-len(tc.output), nRows, "expected only LIMIT number of rows to be deleted")
 		}
-		s.Equal(remaining-len(tc.output), nRows, "expected only LIMIT number of rows to be deleted")
 		s.Equal(len(tc.output), len(resp.Tasks), "rangeCompleteTask deleted wrong set of tasks")
 		for i := range tc.output {
 			s.Equal(tc.output[i], resp.Tasks[i].GetTaskId())

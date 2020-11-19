@@ -468,12 +468,12 @@ func (m *sqlTaskManager) GetTasks(
 	}
 
 	tqId, tqHash := m.taskQueueIdAndHash(nidBytes, request.TaskQueue, request.TaskType)
-	rows, err := m.db.SelectFromTasks(ctx, sqlplugin.TasksFilter{
+	rows, err := m.db.RangeSelectFromTasks(ctx, sqlplugin.TasksRangeFilter{
 		RangeHash:   tqHash,
 		TaskQueueID: tqId,
-		MinTaskID:   &request.ReadLevel,
-		MaxTaskID:   request.MaxReadLevel,
-		PageSize:    &request.BatchSize,
+		MinTaskID:   request.MinExclusiveLevel,
+		MaxTaskID:   request.MaxInclusiveLevel,
+		PageSize:    request.BatchSize,
 	})
 	if err != nil {
 		return nil, serviceerror.NewInternal(fmt.Sprintf("GetTasks operation failed. Failed to get rows. Error: %v", err))
@@ -503,10 +503,12 @@ func (m *sqlTaskManager) CompleteTask(
 
 	taskID := request.TaskID
 	tqId, tqHash := m.taskQueueIdAndHash(nidBytes, request.TaskQueue.Name, request.TaskQueue.TaskType)
-	_, err = m.db.DeleteFromTasks(ctx, sqlplugin.TasksFilter{
+	_, err = m.db.RangeDeleteFromTasks(ctx, sqlplugin.TasksRangeFilter{
 		RangeHash:   tqHash,
 		TaskQueueID: tqId,
-		TaskID:      &taskID})
+		MinTaskID:   -1,
+		MaxTaskID:   taskID,
+	})
 	if err != nil && err != sql.ErrNoRows {
 		return serviceerror.NewInternal(err.Error())
 	}
@@ -523,11 +525,11 @@ func (m *sqlTaskManager) CompleteTasksLessThan(
 		return 0, serviceerror.NewInternal(err.Error())
 	}
 	tqId, tqHash := m.taskQueueIdAndHash(nidBytes, request.TaskQueueName, request.TaskType)
-	result, err := m.db.DeleteFromTasks(ctx, sqlplugin.TasksFilter{
-		RangeHash:            tqHash,
-		TaskQueueID:          tqId,
-		TaskIDLessThanEquals: &request.TaskID,
-		Limit:                &request.Limit,
+	result, err := m.db.RangeDeleteFromTasks(ctx, sqlplugin.TasksRangeFilter{
+		RangeHash:   tqHash,
+		TaskQueueID: tqId,
+		MinTaskID:   -1,
+		MaxTaskID:   request.TaskID,
 	})
 	if err != nil {
 		return 0, serviceerror.NewInternal(err.Error())

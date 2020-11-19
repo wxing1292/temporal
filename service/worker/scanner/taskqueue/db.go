@@ -25,6 +25,7 @@
 package taskqueue
 
 import (
+	"math"
 	"time"
 
 	"go.temporal.io/api/serviceerror"
@@ -35,7 +36,7 @@ import (
 
 var retryForeverPolicy = newRetryForeverPolicy()
 
-func (s *Scavenger) completeTasks(key *p.TaskQueueKey, taskID int64, limit int) (int, error) {
+func (s *Scavenger) completeTasks(key *p.TaskQueueKey, taskID int64) (int, error) {
 	var n int
 	var err error
 	err = s.retryForever(func() error {
@@ -44,7 +45,6 @@ func (s *Scavenger) completeTasks(key *p.TaskQueueKey, taskID int64, limit int) 
 			TaskQueueName: key.Name,
 			TaskType:      key.TaskType,
 			TaskID:        taskID,
-			Limit:         limit,
 		})
 		return err
 	})
@@ -56,11 +56,12 @@ func (s *Scavenger) getTasks(key *p.TaskQueueKey, batchSize int) (*p.GetTasksRes
 	var resp *p.GetTasksResponse
 	err = s.retryForever(func() error {
 		resp, err = s.db.GetTasks(&p.GetTasksRequest{
-			NamespaceID: key.NamespaceID,
-			TaskQueue:   key.Name,
-			TaskType:    key.TaskType,
-			ReadLevel:   -1, // get the first N tasks sorted by taskID
-			BatchSize:   batchSize,
+			NamespaceID:       key.NamespaceID,
+			TaskQueue:         key.Name,
+			TaskType:          key.TaskType,
+			MinExclusiveLevel: -1, // get the first N tasks sorted by taskID
+			MaxInclusiveLevel: math.MaxInt64,
+			BatchSize:         batchSize,
 		})
 		return err
 	})

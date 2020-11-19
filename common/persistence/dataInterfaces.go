@@ -819,12 +819,12 @@ type (
 
 	// GetTasksRequest is used to retrieve tasks of a task queue
 	GetTasksRequest struct {
-		NamespaceID  string
-		TaskQueue    string
-		TaskType     enumspb.TaskQueueType
-		ReadLevel    int64  // range exclusive
-		MaxReadLevel *int64 // optional: range inclusive when specified
-		BatchSize    int
+		NamespaceID       string
+		TaskQueue         string
+		TaskType          enumspb.TaskQueueType
+		MinExclusiveLevel int64
+		MaxInclusiveLevel int64
+		BatchSize         int
 	}
 
 	// GetTasksResponse is the response to GetTasksRequests
@@ -844,7 +844,6 @@ type (
 		TaskQueueName string
 		TaskType      enumspb.TaskQueueType
 		TaskID        int64 // Tasks less than or equal to this ID will be completed
-		Limit         int   // Limit on the max number of tasks that can be completed. Required param
 	}
 
 	// GetTimerTaskRequest is the request for GetTimerTask

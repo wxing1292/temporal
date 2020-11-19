@@ -143,14 +143,13 @@ func (tbl *mockTaskTable) get(count int) []*persistencespb.AllocatedTaskInfo {
 	return tbl.tasks[:]
 }
 
-func (tbl *mockTaskTable) deleteLessThan(id int64, limit int) int {
+func (tbl *mockTaskTable) deleteLessThan(id int64) int {
 	count := 0
 	for _, t := range tbl.tasks {
-		if t.GetTaskId() <= id && count < limit {
-			count++
-			continue
+		if t.GetTaskId() > id {
+			break
 		}
-		break
+		count++
 	}
 	switch {
 	case count == 0:

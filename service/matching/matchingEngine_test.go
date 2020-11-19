@@ -1921,11 +1921,6 @@ func (m *testTaskManager) CreateTasks(request *persistence.CreateTasksRequest) (
 
 // GetTasks provides a mock function with given fields: request
 func (m *testTaskManager) GetTasks(request *persistence.GetTasksRequest) (*persistence.GetTasksResponse, error) {
-	if request.MaxReadLevel != nil {
-		m.logger.Debug("testTaskManager.GetTasks", tag.ReadLevel(request.ReadLevel), tag.ReadLevel(*request.MaxReadLevel))
-	} else {
-		m.logger.Debug("testTaskManager.GetTasks", tag.ReadLevel(request.ReadLevel))
-	}
 
 	tlm := m.getTaskQueueManager(newTestTaskQueueID(request.NamespaceID, request.TaskQueue, request.TaskType))
 	tlm.Lock()
@@ -1935,10 +1930,10 @@ func (m *testTaskManager) GetTasks(request *persistence.GetTasksRequest) (*persi
 	it := tlm.tasks.Iterator()
 	for it.Next() {
 		taskID := it.Key().(int64)
-		if taskID <= request.ReadLevel {
+		if taskID <= request.MinExclusiveLevel {
 			continue
 		}
-		if taskID > *request.MaxReadLevel {
+		if taskID > request.MaxInclusiveLevel {
 			break
 		}
 		tasks = append(tasks, it.Value().(*persistencespb.AllocatedTaskInfo))

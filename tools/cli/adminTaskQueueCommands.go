@@ -33,6 +33,7 @@ import (
 	enumspb "go.temporal.io/api/enums/v1"
 	taskqueuepb "go.temporal.io/api/taskqueue/v1"
 	"go.temporal.io/api/workflowservice/v1"
+
 	"go.temporal.io/server/common/convert"
 
 	"go.temporal.io/server/common/persistence"
@@ -140,7 +141,13 @@ func AdminListTaskQueueTasks(c *cli.Context) {
 		ErrorAndExit("Failed to initialize task manager", err)
 	}
 
-	req := &persistence.GetTasksRequest{NamespaceID: namespace, TaskQueue: tlName, TaskType: tlType, ReadLevel: minReadLvl, MaxReadLevel: &maxReadLvl}
+	req := &persistence.GetTasksRequest{
+		NamespaceID:       namespace,
+		TaskQueue:         tlName,
+		TaskType:          tlType,
+		MinExclusiveLevel: minReadLvl,
+		MaxInclusiveLevel: maxReadLvl,
+	}
 	paginationFunc := func(paginationToken []byte) ([]interface{}, []byte, error) {
 		response, err := taskManager.GetTasks(req)
 		if err != nil {

@@ -47,7 +47,6 @@ import (
 	"go.temporal.io/server/common"
 	"go.temporal.io/server/common/backoff"
 	"go.temporal.io/server/common/cluster"
-	"go.temporal.io/server/common/convert"
 	"go.temporal.io/server/common/log"
 	"go.temporal.io/server/common/log/loggerimpl"
 	"go.temporal.io/server/common/log/tag"
@@ -1288,11 +1287,12 @@ func (s *TestBase) CreateActivityTasks(namespaceID string, workflowExecution com
 // GetTasks is a utility method to get tasks from persistence
 func (s *TestBase) GetTasks(namespaceID string, taskQueue string, taskType enumspb.TaskQueueType, batchSize int) (*persistence.GetTasksResponse, error) {
 	response, err := s.TaskMgr.GetTasks(&persistence.GetTasksRequest{
-		NamespaceID:  namespaceID,
-		TaskQueue:    taskQueue,
-		TaskType:     taskType,
-		BatchSize:    batchSize,
-		MaxReadLevel: convert.Int64Ptr(math.MaxInt64),
+		NamespaceID:       namespaceID,
+		TaskQueue:         taskQueue,
+		TaskType:          taskType,
+		BatchSize:         batchSize,
+		MinExclusiveLevel: -1,
+		MaxInclusiveLevel: math.MaxInt64,
 	})
 
 	if err != nil {

@@ -30,7 +30,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"go.temporal.io/server/common/convert"
 	"go.temporal.io/server/common/persistence/sql/sqlplugin"
 	"go.temporal.io/server/common/shuffle"
 )
@@ -153,17 +152,17 @@ func (s *matchingTaskSuite) TestInsertSelect_Single() {
 	s.NoError(err)
 	s.Equal(1, int(rowsAffected))
 
-	minTaskID := convert.Int64Ptr(taskID - 1)
-	maxTaskID := convert.Int64Ptr(taskID)
-	pageSize := convert.IntPtr(1)
-	filter := sqlplugin.TasksFilter{
+	minTaskID := taskID - 1
+	maxTaskID := taskID
+	pageSize := 1
+	rangeSelectFilter := sqlplugin.TasksRangeFilter{
 		RangeHash:   testMatchingTaskRangeHash,
 		TaskQueueID: queueID,
 		MinTaskID:   minTaskID,
 		MaxTaskID:   maxTaskID,
 		PageSize:    pageSize,
 	}
-	rows, err := s.store.SelectFromTasks(newExecutionContext(), filter)
+	rows, err := s.store.RangeSelectFromTasks(newExecutionContext(), rangeSelectFilter)
 	s.NoError(err)
 	// fill in some omitted info
 	for index := range rows {
@@ -186,17 +185,17 @@ func (s *matchingTaskSuite) TestInsertSelect_Multiple() {
 	s.NoError(err)
 	s.Equal(2, int(rowsAffected))
 
-	minTaskID := convert.Int64Ptr(taskID - 2)
-	maxTaskID := convert.Int64Ptr(taskID)
-	pageSize := convert.IntPtr(2)
-	filter := sqlplugin.TasksFilter{
+	minTaskID := taskID - 2
+	maxTaskID := taskID
+	pageSize := 2
+	rangeSelectFilter := sqlplugin.TasksRangeFilter{
 		RangeHash:   testMatchingTaskRangeHash,
 		TaskQueueID: queueID,
 		MinTaskID:   minTaskID,
 		MaxTaskID:   maxTaskID,
 		PageSize:    pageSize,
 	}
-	rows, err := s.store.SelectFromTasks(newExecutionContext(), filter)
+	rows, err := s.store.RangeSelectFromTasks(newExecutionContext(), rangeSelectFilter)
 	s.NoError(err)
 	// fill in some omitted info
 	for index := range rows {
@@ -206,16 +205,34 @@ func (s *matchingTaskSuite) TestInsertSelect_Multiple() {
 	s.Equal([]sqlplugin.TasksRow{task1, task2}, rows)
 }
 
-func (s *matchingTaskSuite) TestDeleteSelect() {
+func (s *matchingTaskSuite) TestDeleteSelect_Single() {
 	queueID := shuffle.Bytes(testMatchingTaskTaskQueueID)
 	taskID := int64(100)
 
 	filter := sqlplugin.TasksFilter{
 		RangeHash:   testMatchingTaskRangeHash,
 		TaskQueueID: queueID,
-		TaskID:      convert.Int64Ptr(taskID),
+		TaskID:      taskID,
 	}
 	result, err := s.store.DeleteFromTasks(newExecutionContext(), filter)
+	s.NoError(err)
+	rowsAffected, err := result.RowsAffected()
+	s.NoError(err)
+	s.Equal(0, int(rowsAffected))
+}
+
+func (s *matchingTaskSuite) TestDeleteSelect_Multiple() {
+	queueID := shuffle.Bytes(testMatchingTaskTaskQueueID)
+	minTaskID := int64(100)
+	maxTaskID := int64(200)
+
+	filter := sqlplugin.TasksRangeFilter{
+		RangeHash:   testMatchingTaskRangeHash,
+		TaskQueueID: queueID,
+		MinTaskID:   minTaskID,
+		MaxTaskID:   maxTaskID,
+	}
+	result, err := s.store.RangeDeleteFromTasks(newExecutionContext(), filter)
 	s.NoError(err)
 	rowsAffected, err := result.RowsAffected()
 	s.NoError(err)
@@ -233,68 +250,65 @@ func (s *matchingTaskSuite) TestInsertDeleteSelect_Single() {
 	s.NoError(err)
 	s.Equal(1, int(rowsAffected))
 
-	filter := sqlplugin.TasksFilter{
+	deleteFilter := sqlplugin.TasksFilter{
 		RangeHash:   testMatchingTaskRangeHash,
 		TaskQueueID: queueID,
-		TaskID:      convert.Int64Ptr(taskID),
+		TaskID:      taskID,
 	}
-	result, err = s.store.DeleteFromTasks(newExecutionContext(), filter)
+	result, err = s.store.DeleteFromTasks(newExecutionContext(), deleteFilter)
 	s.NoError(err)
 	rowsAffected, err = result.RowsAffected()
 	s.NoError(err)
 	s.Equal(1, int(rowsAffected))
 
-	minTaskID := convert.Int64Ptr(taskID - 1)
-	maxTaskID := convert.Int64Ptr(taskID)
-	pageSize := convert.IntPtr(1)
-	filter = sqlplugin.TasksFilter{
+	selectFilter := sqlplugin.TasksFilter{
 		RangeHash:   testMatchingTaskRangeHash,
 		TaskQueueID: queueID,
-		MinTaskID:   minTaskID,
-		MaxTaskID:   maxTaskID,
-		PageSize:    pageSize,
+		TaskID:      taskID,
 	}
-	rows, err := s.store.SelectFromTasks(newExecutionContext(), filter)
+	rows, err := s.store.SelectFromTasks(newExecutionContext(), selectFilter)
 	s.NoError(err)
 	s.Equal([]sqlplugin.TasksRow(nil), rows)
 }
 
 func (s *matchingTaskSuite) TestInsertDeleteSelect_Multiple() {
 	queueID := shuffle.Bytes(testMatchingTaskTaskQueueID)
-	taskID := int64(100)
+	minTaskID := int64(99)
+	taskID := minTaskID + 1
 
 	task1 := s.newRandomTasksRow(queueID, taskID)
 	taskID++
 	task2 := s.newRandomTasksRow(queueID, taskID)
+
+	maxTaskID := taskID
+
 	result, err := s.store.InsertIntoTasks(newExecutionContext(), []sqlplugin.TasksRow{task1, task2})
 	s.NoError(err)
 	rowsAffected, err := result.RowsAffected()
 	s.NoError(err)
 	s.Equal(2, int(rowsAffected))
 
-	filter := sqlplugin.TasksFilter{
-		RangeHash:            testMatchingTaskRangeHash,
-		TaskQueueID:          queueID,
-		TaskIDLessThanEquals: convert.Int64Ptr(taskID),
-		Limit:                convert.IntPtr(2),
+	filter := sqlplugin.TasksRangeFilter{
+		RangeHash:   testMatchingTaskRangeHash,
+		TaskQueueID: queueID,
+		MinTaskID:   minTaskID,
+		MaxTaskID:   taskID,
 	}
-	result, err = s.store.DeleteFromTasks(newExecutionContext(), filter)
+	result, err = s.store.RangeDeleteFromTasks(newExecutionContext(), filter)
 	s.NoError(err)
 	rowsAffected, err = result.RowsAffected()
 	s.NoError(err)
 	s.Equal(2, int(rowsAffected))
 
-	minTaskID := convert.Int64Ptr(taskID - 2)
-	maxTaskID := convert.Int64Ptr(taskID)
-	pageSize := convert.IntPtr(2)
-	filter = sqlplugin.TasksFilter{
+	pageSize := 2
+	rangeSelectFilter := sqlplugin.TasksRangeFilter{
 		RangeHash:   testMatchingTaskRangeHash,
 		TaskQueueID: queueID,
 		MinTaskID:   minTaskID,
 		MaxTaskID:   maxTaskID,
 		PageSize:    pageSize,
 	}
-	rows, err := s.store.SelectFromTasks(newExecutionContext(), filter)
+	rows, err := s.store.RangeSelectFromTasks(newExecutionContext(), rangeSelectFilter)
 	s.NoError(err)
 	s.Equal([]sqlplugin.TasksRow(nil), rows)
 }

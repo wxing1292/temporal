@@ -27,7 +27,6 @@ package postgresql
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"go.temporal.io/api/serviceerror"
 
@@ -68,14 +67,14 @@ task_queue_id = :task_queue_id
 	// *** Task_Queues Table Above ***
 
 	// *** Tasks Below ***
-	getTaskMinMaxQry = `SELECT task_id, data, data_encoding ` +
+	getTaskQry = `SELECT task_id, data, data_encoding ` +
+		`FROM tasks ` +
+		`WHERE range_hash = $1 AND task_queue_id=$2 AND task_id = $3 `
+
+	getTasksQry = `SELECT task_id, data, data_encoding ` +
 		`FROM tasks ` +
 		`WHERE range_hash = $1 AND task_queue_id=$2 AND task_id > $3 AND task_id <= $4 ` +
 		`ORDER BY task_id LIMIT $5`
-
-	getTaskMinQry = `SELECT task_id, data, data_encoding ` +
-		`FROM tasks ` +
-		`WHERE range_hash = $1 AND task_queue_id = $2 AND task_id > $3 ORDER BY task_id LIMIT $4`
 
 	createTaskQry = `INSERT INTO ` +
 		`tasks(range_hash, task_queue_id, task_id, data, data_encoding) ` +
@@ -85,9 +84,7 @@ task_queue_id = :task_queue_id
 		`WHERE range_hash = $1 AND task_queue_id = $2 AND task_id = $3`
 
 	rangeDeleteTaskQry = `DELETE FROM tasks ` +
-		`WHERE range_hash = $1 AND task_queue_id = $2 AND task_id IN (SELECT task_id FROM
-		 tasks WHERE range_hash = $1 AND task_queue_id = $2 AND task_id <= $3 ` +
-		`ORDER BY task_queue_id,task_id LIMIT $4 )`
+		`WHERE range_hash = $1 AND task_queue_id = $2 AND task_id > $3 AND task_id <= $4 `
 )
 
 // InsertIntoTasks inserts one or more rows into tasks table
@@ -108,26 +105,35 @@ func (pdb *db) SelectFromTasks(
 ) ([]sqlplugin.TasksRow, error) {
 	var err error
 	var rows []sqlplugin.TasksRow
-	switch {
-	case filter.MaxTaskID != nil:
-		err = pdb.conn.SelectContext(ctx,
-			&rows,
-			getTaskMinMaxQry,
-			filter.RangeHash,
-			filter.TaskQueueID,
-			*filter.MinTaskID,
-			*filter.MaxTaskID,
-			*filter.PageSize,
-		)
-	default:
-		err = pdb.conn.SelectContext(ctx,
-			&rows,
-			getTaskMinQry,
-			filter.RangeHash,
-			filter.TaskQueueID,
-			*filter.MinTaskID,
-			*filter.PageSize,
-		)
+	if err = pdb.conn.SelectContext(ctx,
+		&rows,
+		getTaskQry,
+		filter.RangeHash,
+		filter.TaskQueueID,
+		filter.TaskID,
+	); err != nil {
+		return nil, err
+	}
+	return rows, err
+}
+
+// RangeSelectFromTasks reads one or more rows from tasks table
+func (pdb *db) RangeSelectFromTasks(
+	ctx context.Context,
+	filter sqlplugin.TasksRangeFilter,
+) ([]sqlplugin.TasksRow, error) {
+	var err error
+	var rows []sqlplugin.TasksRow
+	if err = pdb.conn.SelectContext(ctx,
+		&rows,
+		getTasksQry,
+		filter.RangeHash,
+		filter.TaskQueueID,
+		filter.MinTaskID,
+		filter.MaxTaskID,
+		filter.PageSize,
+	); err != nil {
+		return nil, err
 	}
 	return rows, err
 }
@@ -137,23 +143,25 @@ func (pdb *db) DeleteFromTasks(
 	ctx context.Context,
 	filter sqlplugin.TasksFilter,
 ) (sql.Result, error) {
-	if filter.TaskIDLessThanEquals != nil {
-		if filter.Limit == nil || *filter.Limit == 0 {
-			return nil, fmt.Errorf("missing limit parameter")
-		}
-		return pdb.conn.ExecContext(ctx,
-			rangeDeleteTaskQry,
-			filter.RangeHash,
-			filter.TaskQueueID,
-			*filter.TaskIDLessThanEquals,
-			*filter.Limit,
-		)
-	}
 	return pdb.conn.ExecContext(ctx,
 		deleteTaskQry,
 		filter.RangeHash,
 		filter.TaskQueueID,
-		*filter.TaskID,
+		filter.TaskID,
+	)
+}
+
+// RangeDeleteFromTasks deletes one or more rows from tasks table
+func (pdb *db) RangeDeleteFromTasks(
+	ctx context.Context,
+	filter sqlplugin.TasksRangeFilter,
+) (sql.Result, error) {
+	return pdb.conn.ExecContext(ctx,
+		rangeDeleteTaskQry,
+		filter.RangeHash,
+		filter.TaskQueueID,
+		filter.MinTaskID,
+		filter.MaxTaskID,
 	)
 }
 
