@@ -32,6 +32,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	backoff "go.temporal.io/server/common/backoff"
 )
 
 // MockProcessor is a mock of Processor interface.
@@ -82,11 +83,9 @@ func (mr *MockProcessorMockRecorder) Stop() *gomock.Call {
 }
 
 // Submit mocks base method.
-func (m *MockProcessor) Submit(task Task) error {
+func (m *MockProcessor) Submit(task Task) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Submit", task)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "Submit", task)
 }
 
 // Submit indicates an expected call of Submit.
@@ -143,32 +142,15 @@ func (mr *MockSchedulerMockRecorder) Stop() *gomock.Call {
 }
 
 // Submit mocks base method.
-func (m *MockScheduler) Submit(task PriorityTask) error {
+func (m *MockScheduler) Submit(task PriorityTask) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Submit", task)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "Submit", task)
 }
 
 // Submit indicates an expected call of Submit.
 func (mr *MockSchedulerMockRecorder) Submit(task interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Submit", reflect.TypeOf((*MockScheduler)(nil).Submit), task)
-}
-
-// TrySubmit mocks base method.
-func (m *MockScheduler) TrySubmit(task PriorityTask) (bool, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "TrySubmit", task)
-	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// TrySubmit indicates an expected call of TrySubmit.
-func (mr *MockSchedulerMockRecorder) TrySubmit(task interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TrySubmit", reflect.TypeOf((*MockScheduler)(nil).TrySubmit), task)
 }
 
 // MockTask is a mock of Task interface.
@@ -260,6 +242,18 @@ func (mr *MockTaskMockRecorder) Nack() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Nack", reflect.TypeOf((*MockTask)(nil).Nack))
 }
 
+// Reschedule mocks base method.
+func (m *MockTask) Reschedule() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Reschedule")
+}
+
+// Reschedule indicates an expected call of Reschedule.
+func (mr *MockTaskMockRecorder) Reschedule() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reschedule", reflect.TypeOf((*MockTask)(nil).Reschedule))
+}
+
 // State mocks base method.
 func (m *MockTask) State() State {
 	m.ctrl.T.Helper()
@@ -272,6 +266,20 @@ func (m *MockTask) State() State {
 func (mr *MockTaskMockRecorder) State() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "State", reflect.TypeOf((*MockTask)(nil).State))
+}
+
+// RetryPolicy mocks base method.
+func (m *MockTask) RetryPolicy() backoff.RetryPolicy {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetryPolicy")
+	ret0, _ := ret[0].(backoff.RetryPolicy)
+	return ret0
+}
+
+// RetryPolicy indicates an expected call of RetryPolicy.
+func (mr *MockTaskMockRecorder) RetryPolicy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetryPolicy", reflect.TypeOf((*MockTask)(nil).RetryPolicy))
 }
 
 // MockPriorityTask is a mock of PriorityTask interface.
@@ -363,6 +371,18 @@ func (mr *MockPriorityTaskMockRecorder) Nack() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Nack", reflect.TypeOf((*MockPriorityTask)(nil).Nack))
 }
 
+// Reschedule mocks base method.
+func (m *MockPriorityTask) Reschedule() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Reschedule")
+}
+
+// Reschedule indicates an expected call of Reschedule.
+func (mr *MockPriorityTaskMockRecorder) Reschedule() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reschedule", reflect.TypeOf((*MockPriorityTask)(nil).Reschedule))
+}
+
 // State mocks base method.
 func (m *MockPriorityTask) State() State {
 	m.ctrl.T.Helper()
@@ -375,6 +395,20 @@ func (m *MockPriorityTask) State() State {
 func (mr *MockPriorityTaskMockRecorder) State() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "State", reflect.TypeOf((*MockPriorityTask)(nil).State))
+}
+
+// RetryPolicy mocks base method.
+func (m *MockPriorityTask) RetryPolicy() backoff.RetryPolicy {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RetryPolicy")
+	ret0, _ := ret[0].(backoff.RetryPolicy)
+	return ret0
+}
+
+// RetryPolicy indicates an expected call of RetryPolicy.
+func (mr *MockPriorityTaskMockRecorder) RetryPolicy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RetryPolicy", reflect.TypeOf((*MockPriorityTask)(nil).RetryPolicy))
 }
 
 // Priority mocks base method.

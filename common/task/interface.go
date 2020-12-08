@@ -28,6 +28,7 @@ package task
 
 import (
 	"go.temporal.io/server/common"
+	"go.temporal.io/server/common/backoff"
 )
 
 type (
@@ -35,15 +36,14 @@ type (
 	// which process tasks
 	Processor interface {
 		common.Daemon
-		Submit(task Task) error
+		Submit(task Task)
 	}
 
 	// Scheduler is the generic interface for scheduling tasks with priority
 	// and processing them
 	Scheduler interface {
 		common.Daemon
-		Submit(task PriorityTask) error
-		TrySubmit(task PriorityTask) (bool, error)
+		Submit(task PriorityTask)
 	}
 
 	// SchedulerType respresents the type of the task scheduler implementation
@@ -64,15 +64,19 @@ type (
 		Ack()
 		// Nack marks the task as unsuccessful completed
 		Nack()
+		// Reschedule marks the task as to be retried
+		Reschedule()
 		// State returns the current task state
 		State() State
+		// RetryPolicy returns the retry policy of the task
+		RetryPolicy() backoff.RetryPolicy
 	}
 
 	// PriorityTask is the interface for tasks which have and can be assigned a priority
 	PriorityTask interface {
 		Task
 		// Priority returns the priority of the task, or NoPriority if no priority was previously assigned
-		Priority() int
+		GetPriority() int
 		// SetPriority sets the priority of the task
 		SetPriority(int)
 	}

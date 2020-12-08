@@ -22,6 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// +build test
+
 package task
 
 import (
@@ -55,9 +57,10 @@ type (
 		queueID   uint32
 		taskID    uint32
 
-		lock   sync.Mutex
-		acked  int
-		nacked int
+		lock        sync.Mutex
+		acked       int
+		nacked      int
+		rescheduled int
 	}
 )
 
@@ -94,7 +97,7 @@ func (s *SequentialTaskProcessorSuite) TestSubmit_NoPriorTask() {
 	task := newTestSequentialTaskImpl(waitgroup, 4, uint32(1))
 
 	// do not start the processor
-	s.Nil(s.processor.Submit(task))
+	s.processor.Submit(task)
 	sequentialTaskQueue := <-s.processor.(*sequentialTaskProcessorImpl).taskqueueChan
 	sequentialTask := sequentialTaskQueue.Remove()
 	s.True(sequentialTaskQueue.IsEmpty())
@@ -107,8 +110,8 @@ func (s *SequentialTaskProcessorSuite) TestSubmit_HasPriorTask() {
 	task2 := newTestSequentialTaskImpl(waitgroup, 4, uint32(2))
 
 	// do not start the processor
-	s.Nil(s.processor.Submit(task1))
-	s.Nil(s.processor.Submit(task2))
+	s.processor.Submit(task1)
+	s.processor.Submit(task2)
 	sequentialTaskQueue := <-s.processor.(*sequentialTaskProcessorImpl).taskqueueChan
 	sequentialTask1 := sequentialTaskQueue.Remove()
 	sequentialTask2 := sequentialTaskQueue.Remove()
@@ -124,8 +127,8 @@ func (s *SequentialTaskProcessorSuite) TestProcessTaskQueue_ShutDown() {
 	task2 := newTestSequentialTaskImpl(waitgroup, 4, uint32(2))
 
 	// do not start the processor
-	s.Nil(s.processor.Submit(task1))
-	s.Nil(s.processor.Submit(task2))
+	s.processor.Submit(task1)
+	s.processor.Submit(task2)
 	sequentialTaskQueue := <-s.processor.(*sequentialTaskProcessorImpl).taskqueueChan
 
 	s.processor.Start()
@@ -147,8 +150,8 @@ func (s *SequentialTaskProcessorSuite) TestProcessTaskQueue() {
 	task2 := newTestSequentialTaskImpl(waitgroup, 4, uint32(2))
 
 	// do not start the processor
-	s.Nil(s.processor.Submit(task1))
-	s.Nil(s.processor.Submit(task2))
+	s.processor.Submit(task1)
+	s.processor.Submit(task2)
 	sequentialTaskQueue := <-s.processor.(*sequentialTaskProcessorImpl).taskqueueChan
 
 	s.processor.(*sequentialTaskProcessorImpl).processTaskQueue(sequentialTaskQueue)
@@ -174,7 +177,7 @@ func (s *SequentialTaskProcessorSuite) TestSequentialTaskProcessing() {
 
 	s.processor.Start()
 	for _, task := range tasks {
-		s.Nil(s.processor.Submit(task))
+		s.processor.Submit(task)
 	}
 	waitgroup.Wait()
 	s.processor.Stop()
@@ -210,7 +213,7 @@ func (s *SequentialTaskProcessorSuite) TestRandomizedTaskProcessing() {
 			<-startChan
 
 			for j := 0; j < numTasks; j++ {
-				s.Nil(s.processor.Submit(tasks[i][j]))
+				s.processor.Submit(tasks[i][j])
 			}
 		}(i)
 	}
@@ -299,6 +302,21 @@ func (t *testSequentialTaskImpl) NumNcked() int {
 	defer t.lock.Unlock()
 
 	return t.nacked
+}
+
+func (t *testSequentialTaskImpl) Reschedule() {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
+	t.rescheduled++
+	t.waitgroup.Done()
+}
+
+func (t *testSequentialTaskImpl) NumReschedule() int {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
+	return t.rescheduled
 }
 
 func (t *testSequentialTaskQueueImpl) QueueID() interface{} {

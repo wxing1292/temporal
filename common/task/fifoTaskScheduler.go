@@ -32,7 +32,6 @@ import (
 	"go.temporal.io/server/common"
 	"go.temporal.io/server/common/backoff"
 	"go.temporal.io/server/common/log"
-	"go.temporal.io/server/common/log/tag"
 	"go.temporal.io/server/common/metrics"
 )
 
@@ -84,7 +83,11 @@ func NewFIFOTaskScheduler(
 }
 
 func (f *fifoTaskSchedulerImpl) Start() {
-	if !atomic.CompareAndSwapInt32(&f.status, common.DaemonStatusInitialized, common.DaemonStatusStarted) {
+	if !atomic.CompareAndSwapInt32(
+		&f.status,
+		common.DaemonStatusInitialized,
+		common.DaemonStatusStarted,
+	) {
 		return
 	}
 
@@ -97,13 +100,19 @@ func (f *fifoTaskSchedulerImpl) Start() {
 }
 
 func (f *fifoTaskSchedulerImpl) Stop() {
-	if !atomic.CompareAndSwapInt32(&f.status, common.DaemonStatusStarted, common.DaemonStatusStopped) {
+	if !atomic.CompareAndSwapInt32(
+		&f.status,
+		common.DaemonStatusStarted,
+		common.DaemonStatusStopped,
+	) {
 		return
 	}
 
 	close(f.shutdownCh)
 
 	f.processor.Stop()
+
+	f.drainTasks()
 
 	if success := common.AwaitWaitGroup(&f.dispatcherWG, time.Minute); !success {
 		f.logger.Warn("FIFO task scheduler timedout on shutdown.")
@@ -114,30 +123,14 @@ func (f *fifoTaskSchedulerImpl) Stop() {
 
 func (f *fifoTaskSchedulerImpl) Submit(
 	task PriorityTask,
-) error {
+) {
 	f.metricsScope.IncCounter(metrics.ParallelTaskSubmitRequest)
 	sw := f.metricsScope.StartTimer(metrics.ParallelTaskSubmitLatency)
 	defer sw.Stop()
 
-	select {
-	case f.taskCh <- task:
-		return nil
-	case <-f.shutdownCh:
-		return ErrTaskSchedulerClosed
-	}
-}
-
-func (f *fifoTaskSchedulerImpl) TrySubmit(
-	task PriorityTask,
-) (bool, error) {
-	select {
-	case f.taskCh <- task:
-		f.metricsScope.IncCounter(metrics.ParallelTaskSubmitRequest)
-		return true, nil
-	case <-f.shutdownCh:
-		return false, ErrTaskSchedulerClosed
-	default:
-		return false, nil
+	f.taskCh <- task
+	if f.isStopped() {
+		f.drainTasks()
 	}
 }
 
@@ -147,12 +140,23 @@ func (f *fifoTaskSchedulerImpl) dispatcher() {
 	for {
 		select {
 		case task := <-f.taskCh:
-			if err := f.processor.Submit(task); err != nil {
-				f.logger.Error("failed to submit task to processor", tag.Error(err))
-				task.Nack()
-			}
+			f.processor.Submit(task)
 		case <-f.shutdownCh:
 			return
 		}
 	}
+}
+
+func (f *fifoTaskSchedulerImpl) drainTasks() {
+	for {
+		select {
+		case task := <-f.taskCh:
+			task.Reschedule()
+		default:
+		}
+	}
+}
+
+func (f *fifoTaskSchedulerImpl) isStopped() bool {
+	return atomic.LoadInt32(&f.status) == common.DaemonStatusStopped
 }

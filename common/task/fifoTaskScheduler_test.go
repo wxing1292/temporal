@@ -22,6 +22,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+// +build test
+
 package task
 
 import (
@@ -96,7 +98,7 @@ func (s *fifoTaskSchedulerSuite) TestFIFO() {
 		mockTask := NewMockPriorityTask(s.controller)
 		tasks = append(tasks, mockTask)
 		taskWG.Add(1)
-		calls = append(calls, s.mockProcessor.EXPECT().Submit(newMockPriorityTaskMatcher(mockTask)).DoAndReturn(mockFn))
+		calls = append(calls, s.mockProcessor.EXPECT().Submit(mockTask).DoAndReturn(mockFn))
 	}
 	calls = append(calls, s.mockProcessor.EXPECT().Stop())
 	gomock.InOrder(calls...)
@@ -104,23 +106,8 @@ func (s *fifoTaskSchedulerSuite) TestFIFO() {
 	s.scheduler.processor = s.mockProcessor
 	s.scheduler.Start()
 	for _, task := range tasks {
-		s.NoError(s.scheduler.Submit(task))
+		s.scheduler.Submit(task)
 	}
 	taskWG.Wait()
 	s.scheduler.Stop()
-}
-
-func (s *fifoTaskSchedulerSuite) TestTrySubmit() {
-	for i := 0; i != s.queueSize; i++ {
-		mockTask := NewMockPriorityTask(s.controller)
-		submitted, err := s.scheduler.TrySubmit(mockTask)
-		s.NoError(err)
-		s.True(submitted)
-	}
-
-	// now the queue is full, submit one more task, should be non-blocking
-	mockTask := NewMockPriorityTask(s.controller)
-	submitted, err := s.scheduler.TrySubmit(mockTask)
-	s.NoError(err)
-	s.False(submitted)
 }

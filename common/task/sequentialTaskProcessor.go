@@ -74,7 +74,11 @@ func NewSequentialTaskProcessor(
 }
 
 func (t *sequentialTaskProcessorImpl) Start() {
-	if !atomic.CompareAndSwapInt32(&t.status, common.DaemonStatusInitialized, common.DaemonStatusStarted) {
+	if !atomic.CompareAndSwapInt32(
+		&t.status,
+		common.DaemonStatusInitialized,
+		common.DaemonStatusStarted,
+	) {
 		return
 	}
 
@@ -86,7 +90,11 @@ func (t *sequentialTaskProcessorImpl) Start() {
 }
 
 func (t *sequentialTaskProcessorImpl) Stop() {
-	if !atomic.CompareAndSwapInt32(&t.status, common.DaemonStatusStarted, common.DaemonStatusStopped) {
+	if !atomic.CompareAndSwapInt32(
+		&t.status,
+		common.DaemonStatusStarted,
+		common.DaemonStatusStopped,
+	) {
 		return
 	}
 
@@ -97,7 +105,7 @@ func (t *sequentialTaskProcessorImpl) Stop() {
 	t.logger.Info("Task processor stopped.")
 }
 
-func (t *sequentialTaskProcessorImpl) Submit(task Task) error {
+func (t *sequentialTaskProcessorImpl) Submit(task Task) {
 
 	t.metricsScope.IncCounter(metrics.SequentialTaskSubmitRequest)
 	metricsTimer := t.metricsScope.StartTimer(metrics.SequentialTaskSubmitLatency)
@@ -106,7 +114,7 @@ func (t *sequentialTaskProcessorImpl) Submit(task Task) error {
 	taskqueue := t.taskQueueFactory(task)
 	taskqueue.Add(task)
 
-	_, fnEvaluated, err := t.taskqueues.PutOrDo(
+	_, fnEvaluated, _ := t.taskqueues.PutOrDo(
 		taskqueue.QueueID(),
 		taskqueue,
 		func(key interface{}, value interface{}) error {
@@ -114,15 +122,11 @@ func (t *sequentialTaskProcessorImpl) Submit(task Task) error {
 			return nil
 		},
 	)
-	if err != nil {
-		return err
-	}
 
 	// if function evaluated, meaning that the task set is
 	// already dispatched
 	if fnEvaluated {
 		t.metricsScope.IncCounter(metrics.SequentialTaskSubmitRequestTaskQueueExist)
-		return nil
 	}
 
 	// need to dispatch this task set
@@ -131,7 +135,6 @@ func (t *sequentialTaskProcessorImpl) Submit(task Task) error {
 	case <-t.shutdownChan:
 	case t.taskqueueChan <- taskqueue:
 	}
-	return nil
 
 }
 
