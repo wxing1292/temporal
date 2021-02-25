@@ -175,6 +175,7 @@ func (h *cassandraHistoryV2Persistence) ReadHistoryBranch(
 		if !iter.Scan(&nodeID, &txnID, &data, &encoding) {
 			break
 		}
+
 		if txnID < lastTxnID {
 			// assuming that business logic layer is correct and transaction ID only increase
 			// thus, valid event batch will come with increasing transaction ID
@@ -191,15 +192,14 @@ func (h *cassandraHistoryV2Persistence) ReadHistoryBranch(
 
 		switch {
 		case nodeID < lastNodeID:
-			return nil, serviceerror.NewInternal(fmt.Sprintf("corrupted data, nodeID cannot decrease"))
+			return nil, serviceerror.NewDataLoss(fmt.Sprintf("corrupted data, nodeID cannot decrease"))
 		case nodeID == lastNodeID:
-			return nil, serviceerror.NewInternal(fmt.Sprintf("corrupted data, same nodeID must have smaller txnID"))
+			return nil, serviceerror.NewDataLoss(fmt.Sprintf("corrupted data, same nodeID must have smaller txnID"))
 		default: // row.NodeID > lastNodeID:
 			// NOTE: when row.nodeID > lastNodeID, we expect the one with largest txnID comes first
 			lastTxnID = txnID
 			lastNodeID = nodeID
-			eventBlob := p.NewDataBlob(data, encoding)
-			history = append(history, eventBlob)
+			history = append(history, p.NewDataBlob(data, encoding))
 		}
 	}
 

@@ -445,7 +445,7 @@ func (m *historyV2ManagerImpl) readHistoryBranch(
 			}
 		}
 
-		token.LastEventVersion = firstEvent.GetVersion()
+		token.LastEventVersion = lastEvent.GetVersion()
 		token.LastEventID = lastEvent.GetEventId()
 		if byBatch {
 			historyEventBatches = append(historyEventBatches, &historypb.History{Events: events})

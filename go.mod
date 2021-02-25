@@ -24,7 +24,7 @@ require (
 	github.com/fatih/color v1.10.0
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/gocql/gocql v0.0.0-20201215165327-e49edf966d90
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/gogo/status v1.1.0
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
@@ -73,9 +73,8 @@ require (
 	golang.org/x/oauth2 v0.0.0-20201208152858-08078c50e5b5
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/time v0.0.0-20201208040808-7e3f01d25324
-	golang.org/x/tools v0.0.0-20201229013931-929a8494cf60 // indirect
 	google.golang.org/api v0.36.0
-	google.golang.org/grpc v1.34.0
+	google.golang.org/grpc v1.35.0
 	google.golang.org/grpc/examples v0.0.0-20200625174016-7a808837ae92
 	google.golang.org/protobuf v1.25.1-0.20201020201750-d3470999428b // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1
@@ -84,3 +83,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.0-20210106172901-c476de37821d
 	honnef.co/go/tools v0.1.0 // indirect
 )
+
+replace go.temporal.io/api => github.com/wxing1292/api-go v1.0.1-0.20210305184909-513103793126

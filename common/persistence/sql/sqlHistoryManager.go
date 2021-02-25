@@ -198,8 +198,6 @@ func (m *sqlHistoryV2Manager) ReadHistoryBranch(
 	history := make([]*commonpb.DataBlob, 0, request.PageSize)
 
 	for _, row := range rows {
-		eventBlob := p.NewDataBlob(row.Data, row.DataEncoding)
-
 		if row.TxnID < lastTxnID {
 			// assuming that business logic layer is correct and transaction ID only increase
 			// thus, valid event batch will come with increasing transaction ID
@@ -212,7 +210,7 @@ func (m *sqlHistoryV2Manager) ReadHistoryBranch(
 			//  -> batch with lower transaction ID is invalid (happens before)
 			//  -> batch with higher transaction ID is valid
 			if row.NodeID < lastNodeID {
-				return nil, serviceerror.NewInternal(fmt.Sprintf("corrupted data, nodeID cannot decrease"))
+				return nil, serviceerror.NewDataLoss(fmt.Sprintf("corrupted data, nodeID cannot decrease"))
 			} else if row.NodeID > lastNodeID {
 				// update lastNodeID so that our pagination can make progress in the corner case that
 				// the page are all rows with smaller txnID
@@ -224,15 +222,14 @@ func (m *sqlHistoryV2Manager) ReadHistoryBranch(
 
 		switch {
 		case row.NodeID < lastNodeID:
-			return nil, serviceerror.NewInternal(fmt.Sprintf("corrupted data, nodeID cannot decrease"))
+			return nil, serviceerror.NewDataLoss(fmt.Sprintf("corrupted data, nodeID cannot decrease"))
 		case row.NodeID == lastNodeID:
-			return nil, serviceerror.NewInternal(fmt.Sprintf("corrupted data, same nodeID must have smaller txnID"))
+			return nil, serviceerror.NewDataLoss(fmt.Sprintf("corrupted data, same nodeID must have smaller txnID"))
 		default: // row.NodeID > lastNodeID:
 			// NOTE: when row.nodeID > lastNodeID, we expect the one with largest txnID comes first
 			lastTxnID = row.TxnID
 			lastNodeID = row.NodeID
-			history = append(history, eventBlob)
-			eventBlob = &commonpb.DataBlob{}
+			history = append(history, p.NewDataBlob(row.Data, row.DataEncoding))
 		}
 	}
 
