@@ -185,6 +185,7 @@ const (
 	FlagAddBadBinary                     = "add_bad_binary"
 	FlagRemoveBadBinary                  = "remove_bad_binary"
 	FlagResetType                        = "reset_type"
+	FlagResetReapplyType                 = "reset_reapply_type"
 	FlagResetPointsOnly                  = "reset_points_only"
 	FlagResetBadBinaryChecksum           = "reset_bad_binary_checksum"
 	FlagListQuery                        = "query"
